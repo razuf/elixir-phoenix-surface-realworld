@@ -12,9 +12,10 @@ defmodule RealWorld.Application do
       # Start the PubSub system
       {Phoenix.PubSub, name: RealWorld.PubSub},
       # Start the Endpoint (http/https)
-      RealWorldWeb.Endpoint
+      RealWorldWeb.Endpoint,
       # Start a worker by calling: RealWorld.Worker.start_link(arg)
       # {RealWorld.Worker, arg}
+      {RealWorld.Repo, []}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
