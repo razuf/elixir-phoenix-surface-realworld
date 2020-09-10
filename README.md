@@ -5,7 +5,7 @@
 > Elixir (Phoenix Surface) codebase containing real world examples (CRUD, auth, advanced patterns, etc) that adheres to the [RealWorld](https://github.com/gothinkster/realworld-example-apps) spec and API.
 
 
-### [Demo]()&nbsp;&nbsp;&nbsp;&nbsp;[RealWorld](https://github.com/gothinkster/realworld)
+### [Demo](https://github.com/gothinkster/realworld)&nbsp;&nbsp;&nbsp;&nbsp;[RealWorld](https://github.com/gothinkster/realworld)
 
 
 This codebase was created to demonstrate a frontend application built with **Elixir and Phoenix Surface** including CRUD operations, authentication, routing, pagination, and more.
@@ -56,14 +56,11 @@ mix phx.server
 
 This is a frontend project, you can go to http://localhost:4000 and see this aplication. 
 
-# ![Elixir Phoenix LiveView Example App](start.png)
-
 This is connected to the standard [Conduit](https://demo.realworld.io/#/) backend `https://conduit.productionready.io/api`.
 
 In order to connect other [Conduit](https://demo.realworld.io/#/) backends you can download and setup one of the [backend projects](https://demo.realworld.io/#/) and set it up as api for this app. Typically this can be done by finding the localhost url and port e.g. `localhost:9000` and then put it into:
 
 http://localhost:4000/backend_api_url 
-
 
 
 ## Tests
