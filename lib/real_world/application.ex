@@ -15,7 +15,8 @@ defmodule RealWorld.Application do
       RealWorldWeb.Endpoint,
       # Start a worker by calling: RealWorld.Worker.start_link(arg)
       # {RealWorld.Worker, arg}
-      {RealWorld.Repo, []}
+      {RealWorld.Repo, []},
+      {Finch, name: MyFinch}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

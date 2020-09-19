@@ -27,6 +27,11 @@ defmodule RealWorld.User do
 
   def changeset_login(user, attrs) do
     user
+    |> cast(attrs, [:email, :password])
+  end
+
+  def changeset_auth(user, attrs) do
+    user
     |> cast(attrs, [:email, :password, :token, :session_id])
     |> validate_required([:email, :password])
     |> validate_length(:password, min: 8, max: 72)

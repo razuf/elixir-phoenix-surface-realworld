@@ -90,9 +90,9 @@ defmodule RealWorldWeb.MainLive do
   @impl true
   def mount(_params, session, socket) do
     if connected?(socket) do
-      {:ok, assign_defaults(socket, session)}
+      {:ok, assign_defaults_connected(socket, session)}
     else
-      {:ok, socket}
+      {:ok, assign_defaults(socket, session)}
     end
   end
 
@@ -163,7 +163,7 @@ defmodule RealWorldWeb.MainLive do
     send(self(), {:get_article_by_slug, slug, session_id})
 
     socket
-    |> assign(changeset: nil)
+    |> assign(changeset: Datastore.change_new_comment())
   end
 
   defp apply_action(socket, params, :editor) do
@@ -211,13 +211,13 @@ defmodule RealWorldWeb.MainLive do
   defp apply_action(socket, _params, :login) do
     socket
     |> assign(submit: "login")
-    |> assign(changeset: nil)
+    |> assign(changeset: Datastore.change_user())
   end
 
   defp apply_action(socket, _params, :register) do
     socket
     |> assign(submit: "register")
-    |> assign(changeset: nil)
+    |> assign(changeset: Datastore.change_user())
     |> assign(change: "change_register")
   end
 

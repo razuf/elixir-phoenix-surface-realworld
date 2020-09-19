@@ -1,77 +1,74 @@
 defmodule RealWorld.Api do
   @moduledoc """
-  The Api server connection.
+    The backend Api connection.
   """
-  use Tesla
 
   alias RealWorld.Datastore
 
-  def client(session_id) do
+  def compose_url(url) do
+    System.get_env(
+      "CONDUIT_BACKEND_API_URL",
+      Application.fetch_env!(:real_world, :conduit_backend_api_url)
+    ) <> URI.encode(url)
+  end
+
+  def headers(session_id) do
     token = Datastore.get_token_by_session_id(session_id)
-    conduit_backend_api_url = Application.fetch_env!(:real_world, :conduit_backend_api_url)
 
-    middleware =
-      if token do
-        [
-          {Tesla.Middleware.BaseUrl, conduit_backend_api_url},
-          Tesla.Middleware.JSON,
-          {Tesla.Middleware.Headers, [{"authorization", "Token " <> token}]}
-        ]
-      else
-        [
-          {Tesla.Middleware.BaseUrl, conduit_backend_api_url},
-          Tesla.Middleware.JSON
-        ]
-      end
-
-    Tesla.client(middleware)
+    if token do
+      [
+        {"content-type", "application/json"},
+        {"authorization", "Token " <> token}
+      ]
+    else
+      [{"content-type", "application/json"}]
+    end
   end
 
   def server_get(url, session_id \\ "") do
-    url = url |> URI.encode()
+    request = Finch.build(:get, compose_url(url), headers(session_id))
 
-    case Tesla.get(client(session_id), url, headers: [{"content-type", "application/json"}]) do
-      {:ok, result} ->
-        result.body
-
-      error ->
-        IO.inspect(binding(), label: "### Tesla Server error - GET")
-    end
+    call_request(request)
   end
 
   def server_post(url, request_body, session_id \\ "") do
-    url = url |> URI.encode()
+    body = request_body |> Jason.encode!()
+    request = Finch.build(:post, compose_url(url), headers(session_id), body)
 
-    case Tesla.post(client(session_id), url, request_body) do
-      {:ok, result} ->
-        result.body
-
-      error ->
-        IO.inspect(binding(), label: "### Tesla Server error - POST")
-    end
+    call_request(request)
   end
 
   def server_delete(url, session_id \\ "") do
-    url = url |> URI.encode()
+    request = Finch.build(:delete, compose_url(url), headers(session_id))
 
-    case Tesla.delete(client(session_id), url) do
-      {:ok, result} ->
-        result.body
-
-      error ->
-        IO.inspect(binding(), label: "### Tesla Server error - DELETE")
-    end
+    call_request(request)
   end
 
   def server_put(url, request_body, session_id \\ "") do
-    url = url |> URI.encode()
+    body = request_body |> Jason.encode!()
 
-    case Tesla.put(client(session_id), url, request_body) do
+    request = Finch.build(:put, compose_url(url), headers(session_id), body)
+
+    call_request(request)
+  end
+
+  defp call_request(request) do
+    case Finch.request(request, MyFinch) do
       {:ok, result} ->
-        result.body
+        case result.body do
+          "{" <> rest = body ->
+            body
+            |> Jason.decode!()
+
+          "" ->
+            ""
+
+          _ ->
+            IO.inspect(binding(), label: "### api error - finch call")
+        end
 
       error ->
-        IO.inspect(binding(), label: "### Tesla Server error - PUT")
+        IO.inspect(binding(), label: "### api error - finch call")
     end
   end
 end

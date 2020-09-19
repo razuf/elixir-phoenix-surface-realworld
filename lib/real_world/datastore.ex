@@ -2,26 +2,48 @@ defmodule RealWorld.Datastore do
   @moduledoc """
   The Datastore.
   """
-  alias RealWorld.Api
-
   import Ecto.Query, warn: false
   import Ecto.Changeset
+
+  alias RealWorld.Api
   alias RealWorld.Repo
   alias RealWorld.User
   alias RealWorld.Article
   alias RealWorld.Comment
   alias RealWorld.Helpers
 
+  alias RealWorld.Backend
+
+  ### Backend
+
+  def default_backend() do
+    %Backend{}
+  end
+
+  def change_backend() do
+    Backend.changeset(default_backend())
+  end
+
+  def validate_backend(form_params) do
+    changeset = Backend.changeset_from_form(default_backend(), form_params)
+
+    cond do
+      changeset.valid? ->
+        :ok
+
+      true ->
+        {:error, changeset}
+    end
+  end
+
+  ### User
+
   def default_user() do
     %User{}
   end
 
-  def default_comment() do
-    %Comment{}
-  end
-
-  def default_article() do
-    %Article{}
+  def change_user() do
+    User.changeset_login(default_user(), %{})
   end
 
   def change_user(%User{} = user, attrs) do
@@ -30,18 +52,6 @@ defmodule RealWorld.Datastore do
 
   def change_user(attrs) do
     User.changeset(default_user(), attrs)
-  end
-
-  def change_article(attrs) do
-    Article.changeset_from_article(default_article(), attrs)
-  end
-
-  def change_new_article() do
-    Article.changeset(%Article{})
-  end
-
-  def change_new_comment() do
-    Comment.changeset(default_comment())
   end
 
   def get_user_by_session_id(session_id) do
@@ -56,16 +66,14 @@ defmodule RealWorld.Datastore do
 
   def auth_user(form_params) do
     # POST /api/users/login
-
     # Example request body:
-
     # {
     #   "user":{
     #     "email": "jake@jake.jake",
     #     "password": "jakejake"
     #   }
     # }
-    changeset = User.changeset_login(default_user(), form_params)
+    changeset = User.changeset_auth(default_user(), form_params)
 
     cond do
       changeset.valid? ->
@@ -85,6 +93,13 @@ defmodule RealWorld.Datastore do
             changeset =
               changeset
               |> Helpers.add_errors_to_changeset(errors)
+
+            {:error, changeset}
+
+          error ->
+            changeset =
+              changeset
+              |> Helpers.add_errors_to_changeset(inspect(error))
 
             {:error, changeset}
         end
@@ -112,9 +127,7 @@ defmodule RealWorld.Datastore do
 
   def register_user(user_attrs, session_id) do
     # POST /api/users
-
     # Example request body:
-
     # {
     #   "user":{
     #     "username": "Jacob",
@@ -154,9 +167,7 @@ defmodule RealWorld.Datastore do
 
   def update_user(user_attrs, session_id) do
     # PUT /api/user
-
     # Example request body:
-
     # {
     #   "user":{
     #     "email": "jake@jake.jake",
@@ -227,87 +238,19 @@ defmodule RealWorld.Datastore do
     end
   end
 
-  ### articles
+  ### Article
 
-  def list_articles(offset, limit_per_page, session_id) do
-    result = Api.server_get("/articles?limit=#{limit_per_page}&offset=#{offset}", session_id)
-    result_handler_articles(result)
+  def default_article() do
+    %Article{}
   end
 
-  def feed_articles(offset, limit_per_page, session_id) do
-    result = Api.server_get("/articles/feed?limit=#{limit_per_page}&offset=#{offset}", session_id)
-    result_handler_articles(result)
+  def change_article(attrs) do
+    Article.changeset_from_article(default_article(), attrs)
   end
 
-  def get_articles_by_tag(tag, offset, limit_per_page, session_id) do
-    result =
-      Api.server_get(
-        "/articles?tag=#{tag}&limit=#{limit_per_page}&offset=#{offset}",
-        session_id
-      )
-
-    result_handler_articles(result)
+  def change_new_article() do
+    Article.changeset(%Article{})
   end
-
-  def get_articles_by_username(username, offset, limit_per_page, session_id) do
-    result =
-      Api.server_get(
-        "/articles?author=#{username}&limit=#{limit_per_page}&offset=#{offset}",
-        session_id
-      )
-
-    result_handler_articles(result)
-  end
-
-  def get_articles_favorited_by_username(username, offset, limit_per_page, session_id) do
-    result =
-      Api.server_get(
-        "/articles?favorited=#{username}&limit=#{limit_per_page}&offset=#{offset}",
-        session_id
-      )
-
-    result_handler_articles(result)
-  end
-
-  defp result_handler_articles(result_body) do
-    case result_body do
-      %{"articles" => articles, "articlesCount" => articlesCount} ->
-        %{"articles" => articles, "articlesCount" => articlesCount}
-
-      _ ->
-        %{"articles" => [], "articlesCount" => 0}
-    end
-  end
-
-  ### profile
-
-  def get_profile_by_username(username, session_id) do
-    result = Api.server_get("/profiles/#{username}", session_id)
-
-    case result do
-      %{"profile" => profile} ->
-        profile
-
-      _ ->
-        nil
-    end
-  end
-
-  ### tags
-
-  def list_tags(session_id \\ "") do
-    result = Api.server_get("/tags", session_id)
-
-    case result do
-      %{"tags" => tags} ->
-        tags
-
-      _ ->
-        []
-    end
-  end
-
-  ### article
 
   def get_article_by_slug(slug, session_id) do
     result = Api.server_get("/articles/#{slug}", session_id)
@@ -323,9 +266,7 @@ defmodule RealWorld.Datastore do
 
   def create_article(form_params, session_id) do
     # POST /api/articles
-
     # Example request body:
-
     # {
     #   "article": {
     #     "title": "How to train your dragon",
@@ -366,9 +307,7 @@ defmodule RealWorld.Datastore do
 
   def update_article(form_params, session_id) do
     # PUT /api/articles/:slug
-
     # Example request body:
-
     # {
     #   "article": {
     #     "title": "Did you train your dragon?"
@@ -451,7 +390,67 @@ defmodule RealWorld.Datastore do
     end
   end
 
-  ### comment
+  ### articles
+
+  def list_articles(offset, limit_per_page, session_id) do
+    result = Api.server_get("/articles?limit=#{limit_per_page}&offset=#{offset}", session_id)
+    result_handler_articles(result)
+  end
+
+  def feed_articles(offset, limit_per_page, session_id) do
+    result = Api.server_get("/articles/feed?limit=#{limit_per_page}&offset=#{offset}", session_id)
+    result_handler_articles(result)
+  end
+
+  def get_articles_by_tag(tag, offset, limit_per_page, session_id) do
+    result =
+      Api.server_get(
+        "/articles?tag=#{tag}&limit=#{limit_per_page}&offset=#{offset}",
+        session_id
+      )
+
+    result_handler_articles(result)
+  end
+
+  def get_articles_by_username(username, offset, limit_per_page, session_id) do
+    result =
+      Api.server_get(
+        "/articles?author=#{username}&limit=#{limit_per_page}&offset=#{offset}",
+        session_id
+      )
+
+    result_handler_articles(result)
+  end
+
+  def get_articles_favorited_by_username(username, offset, limit_per_page, session_id) do
+    result =
+      Api.server_get(
+        "/articles?favorited=#{username}&limit=#{limit_per_page}&offset=#{offset}",
+        session_id
+      )
+
+    result_handler_articles(result)
+  end
+
+  defp result_handler_articles(result) do
+    case result do
+      %{"articles" => articles, "articlesCount" => articlesCount} ->
+        %{"articles" => articles, "articlesCount" => articlesCount}
+
+      result ->
+        %{"articles" => [], "articlesCount" => 0}
+    end
+  end
+
+  ### Comment
+
+  def default_comment() do
+    %Comment{}
+  end
+
+  def change_new_comment() do
+    Comment.changeset(default_comment())
+  end
 
   def get_comments_from_one_article(slug, session_id) do
     result = Api.server_get("/articles/#{slug}/comments", session_id)
@@ -512,6 +511,34 @@ defmodule RealWorld.Datastore do
 
       _result ->
         :ok
+    end
+  end
+
+  ### profile
+
+  def get_profile_by_username(username, session_id) do
+    result = Api.server_get("/profiles/#{username}", session_id)
+
+    case result do
+      %{"profile" => profile} ->
+        profile
+
+      _ ->
+        nil
+    end
+  end
+
+  ### tags
+
+  def list_tags(session_id \\ "") do
+    result = Api.server_get("/tags", session_id)
+
+    case result do
+      %{"tags" => tags} ->
+        tags
+
+      _ ->
+        []
     end
   end
 end

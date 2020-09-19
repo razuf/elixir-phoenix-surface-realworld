@@ -23,9 +23,6 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
-config :tesla, adapter: Tesla.Adapter.Mint
-config :tesla, Tesla.Adapter.Mint, cacert: ["priv/cacerts.pem"]
-
 config :real_world,
   conduit_backend_api_url: "https://conduit.productionready.io/api"
 

@@ -49,7 +49,7 @@ defmodule RealWorld.MixProject do
       {:excoveralls, "~> 0.13", only: [:dev, :test]},
       {:ecto, "~> 3.0"},
       {:phoenix_ecto, "~> 4.1"},
-      {:tesla, "~> 1.3.0"},
+      {:finch, "~> 0.3.0"},
       {:hackney, "~> 1.16"},
       {:mint, "~> 1.0"},
       {:castore, "~> 0.1"},
